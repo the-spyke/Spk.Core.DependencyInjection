@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Spk.Core.DependencyInjection.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -60,4 +61,8 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+	<Target Name="AfterBuild" Condition="'$(Configuration)' == 'Release'">
+		<Exec Command="nuget pack Spk.Core.DependencyInjection.csproj -Symbols -Prop Configuration=Release -OutputDirectory ..\Outputs" />
+	</Target>
+
 </Project>

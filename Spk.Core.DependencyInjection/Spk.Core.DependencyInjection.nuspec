@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+	<metadata>
+		<id>$id$</id>
+		<version>$version$</version>
+		<title>$title$</title>
+		<authors>$author$</authors>
+		<owners>$author$</owners>
+		<licenseUrl>http://unlicense.org</licenseUrl>
+		<projectUrl>https://github.com/the-spyke/Spk.Core.DependencyInjection</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>$description$</description>
+		<releaseNotes>First alpha version.</releaseNotes>
+		<copyright>Public Domain, 2016</copyright>
+		<tags>Spk SPYke</tags>
+	</metadata>
+</package>
