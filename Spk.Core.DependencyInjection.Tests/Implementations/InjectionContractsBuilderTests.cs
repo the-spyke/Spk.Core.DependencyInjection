@@ -53,6 +53,9 @@ namespace Spk.Core.DependencyInjection.Implementations.Tests
 
 			MyComponent myComponent = container.GetInstance<MyComponent>();
 
+			Console.WriteLine(myComponent.MyService1.GetSeting());
+			Console.WriteLine(myComponent.MyService2.GetSeting());
+			 
 			Assert.AreEqual(myComponent.MyService1.GetSeting(), "This is MyService #1", "IMyService1 wrong result.");
 			Assert.AreEqual(myComponent.MyService2.GetSeting(), "This is MyService #2", "IMyService2 wrong result.");
 		}

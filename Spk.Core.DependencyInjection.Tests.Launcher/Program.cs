@@ -12,8 +12,6 @@ namespace Spk.Core.DependencyInjection.Tests.Launcher
 	{
 		static void Main(string[] args)
 		{
-			Stopwatch stopWatch = new Stopwatch();
-
 			InjectionContractsBuilderTests tests = new InjectionContractsBuilderTests();
 
 			tests.Initialize();

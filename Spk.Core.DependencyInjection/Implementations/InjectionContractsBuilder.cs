@@ -75,6 +75,8 @@ namespace Spk.Core.DependencyInjection.Implementations
 				return contracts;
 			}
 
+			// All implemented contracts will be stored in an assembly with this prefix.
+			// GUIDs for multiple invocations during program's lifetime. 
 			string rootNameSpace = string.Format(
 				"{0}.{1}_{2}",
 				assemblyNamePrefix,
@@ -82,29 +84,37 @@ namespace Spk.Core.DependencyInjection.Implementations
 				Guid.NewGuid().ToString("N"));
 
 			AssemblyName assemblyName = new AssemblyName(rootNameSpace);
+			// TODO: Investigate disadvantages of the Collect mode.
 			AssemblyBuilderAccess assemblyBuilderAccess = AssemblyBuilderAccess.Run;
 
 #if DEBUG
+			// Saving assembly only for testing and debugging.
 			assemblyBuilderAccess = AssemblyBuilderAccess.RunAndSave;
 #endif
 
 			AssemblyBuilder assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyName, assemblyBuilderAccess);
 
+			// I don't know, how to choose module names :(
 			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule("Core");
 
+			// For every contract generate its implementation and add it to the dictionary.
 			foreach (Type targetInterface in injectionContracts)
 			{
+				// First 'I' is not removed from implementation's name.
+				// GUID is for same named contracts in different name spaces.
 				string typeName = string.Format(
 					"{0}.{1}_{2}",
 					rootNameSpace,
 					targetInterface.Name,
 					Guid.NewGuid().ToString("N"));
 
+				// A regular public sealed class.
 				TypeBuilder typeBuilder = moduleBuilder.DefineType(
 					typeName,
 					TypeAttributes.Class | TypeAttributes.Public | TypeAttributes.AutoLayout |
 					TypeAttributes.AnsiClass | TypeAttributes.Sealed | TypeAttributes.BeforeFieldInit);
 
+				// Implements an injection contract.
 				typeBuilder.AddInterfaceImplementation(targetInterface);
 
 				List<PropertyInfo> injectionProperties = GetInjectionProperties(targetInterface);
@@ -172,6 +182,8 @@ namespace Spk.Core.DependencyInjection.Implementations
 		{
 			Type[] baseInterfaces = injectionContract.GetInterfaces();
 
+			// An injection contract must not contain any other interfaces as its parents, but other injection contracts.
+			// TODO: Add checks, that there are should be no methods in a contract.
 			if (baseInterfaces.Any(bi => !_rootContract.IsAssignableFrom(bi) && bi != _rootContract))
 			{
 				throw new InvalidOperationException(string.Format(
@@ -191,14 +203,7 @@ namespace Spk.Core.DependencyInjection.Implementations
 		{
 			foreach (Type injectionContract in injectionContracts)
 			{
-				Type[] baseInterfaces = injectionContract.GetInterfaces();
-
-				if (baseInterfaces.Any(bi => !_rootContract.IsAssignableFrom(bi) && bi != _rootContract))
-				{
-					throw new InvalidOperationException(string.Format(
-						"Interface <{0}> contains another interface in its hierarchy, which is not an Injection Contract descendant.",
-						injectionContract.FullName));
-				}
+				CheckInjectionContractForPurity(injectionContract);
 			}
 		}
 
@@ -214,6 +219,7 @@ namespace Spk.Core.DependencyInjection.Implementations
 		{
 			List<PropertyInfo> properties = new List<PropertyInfo>();
 
+			// Combine properties from all contracts in hierarchy.
 			properties.AddRange(injectionContract.GetProperties());
 
 			foreach (Type subInterface in injectionContract.GetInterfaces())
@@ -223,6 +229,9 @@ namespace Spk.Core.DependencyInjection.Implementations
 
 			HashSet<string> propertyNames = new HashSet<string>();
 
+			// Check every property for constraints:
+			// 1. We inject only classes and interfaces
+			// 2. Do not define same properties in multiple interfaces (will be removed in future)
 			foreach (PropertyInfo property in properties)
 			{
 				if (property.PropertyType.IsValueType)
@@ -242,9 +251,6 @@ namespace Spk.Core.DependencyInjection.Implementations
 						property.DeclaringType.Name,
 						injectionContract.FullName));
 				}
-
-				Console.WriteLine(property.Name);
-				Console.WriteLine(property.DeclaringType.FullName);
 
 				propertyNames.Add(property.Name);
 			}
@@ -268,10 +274,15 @@ namespace Spk.Core.DependencyInjection.Implementations
 			TypeBuilder typeBuilder,
 			PropertyInfo property)
 		{
-			FieldInfo backingField = typeBuilder.DefineField("_" + property.Name, property.PropertyType, FieldAttributes.Private);
+			// Private field has the name of the property + '_' symbol at the front (no first letter case lowering).
+			FieldInfo backingField = typeBuilder.DefineField(
+				"_" + property.Name,
+				property.PropertyType,
+				FieldAttributes.Private | FieldAttributes.InitOnly);
 
 			MethodInfo definedGetter = property.GetGetMethod();
 
+			// Contract is required to have a getter only property
 			if (definedGetter == null)
 			{
 				throw new InvalidOperationException(string.Format(
@@ -280,6 +291,7 @@ namespace Spk.Core.DependencyInjection.Implementations
 					property.DeclaringType.FullName));
 			}
 
+			// Same property methods name generation as in current C# compiler.
 			MethodBuilder getterBuilder = typeBuilder.DefineMethod(
 				"get_" + property.Name,
 				MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName |
@@ -289,6 +301,7 @@ namespace Spk.Core.DependencyInjection.Implementations
 
 			ILGenerator getterBody = getterBuilder.GetILGenerator();
 
+			// Just return the backing field.
 			getterBody.Emit(OpCodes.Ldarg_0);
 			getterBody.Emit(OpCodes.Ldfld, backingField);
 			getterBody.Emit(OpCodes.Ret);
@@ -297,6 +310,8 @@ namespace Spk.Core.DependencyInjection.Implementations
 
 			MethodInfo definedSetter = property.GetSetMethod();
 
+			// Contract is required to have a getter only property.
+			// All dependencies are injected in constructor and there are should be no way to modify this.
 			if (definedSetter != null)
 			{
 				throw new InvalidOperationException(string.Format(
@@ -329,6 +344,7 @@ namespace Spk.Core.DependencyInjection.Implementations
 				CallingConventions.Standard,
 				propertiesBackingFields.Select(bfp => bfp.Value.FieldType).ToArray());
 
+			// Own parameters start with 1 index.
 			short parameterIndex = 1;
 
 			foreach (KeyValuePair<string, FieldInfo> backingFieldPair in propertiesBackingFields)
@@ -343,6 +359,7 @@ namespace Spk.Core.DependencyInjection.Implementations
 				parameterIndex += 1;
 			}
 
+			// For the first null value parameter there will be an ArgumentNullException with this parameter's name.
 			Type exceptionType = typeof(ArgumentNullException);
 			ConstructorInfo exceptionConstructor = exceptionType.GetConstructor(new Type[] { typeof(string) });
 

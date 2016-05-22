@@ -60,6 +60,10 @@
     <Compile Include="Components\MyComponent.cs" />
     <Compile Include="Components\MyComponentBase.cs" />
     <Compile Include="Components\Services.cs" />
+    <Compile Include="Prototypes\BaseComponent.cs" />
+    <Compile Include="Prototypes\BaseComponentContract.cs" />
+    <Compile Include="Prototypes\IMarkerInterface.cs" />
+    <Compile Include="Prototypes\ServiceForBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Spk.Core.DependencyInjection\Spk.Core.DependencyInjection.csproj">
