@@ -306,8 +306,6 @@ namespace Spk.Core.DependencyInjection.Implementations
 			getterBody.Emit(OpCodes.Ldfld, backingField);
 			getterBody.Emit(OpCodes.Ret);
 
-			typeBuilder.DefineMethodOverride(getterBuilder, definedGetter);
-
 			MethodInfo definedSetter = property.GetSetMethod();
 
 			// Contract is required to have a getter only property.
