@@ -10,7 +10,7 @@
 		<projectUrl>https://github.com/the-spyke/Spk.Core.DependencyInjection</projectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>$description$</description>
-		<releaseNotes>First alpha version.</releaseNotes>
+		<releaseNotes>Updated assembly module name generation and contract's property implementation.</releaseNotes>
 		<copyright>Public Domain, 2016</copyright>
 		<tags>Spk SPYke</tags>
 	</metadata>
