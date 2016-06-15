@@ -95,7 +95,7 @@ namespace Spk.Core.DependencyInjection.Implementations
 			AssemblyBuilder assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyName, assemblyBuilderAccess);
 
 			// I don't know, how to choose module names :(
-			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule("Core");
+			ModuleBuilder moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName + ".dll");
 
 			// For every contract generate its implementation and add it to the dictionary.
 			foreach (Type targetInterface in injectionContracts)
@@ -136,7 +136,7 @@ namespace Spk.Core.DependencyInjection.Implementations
 			}
 
 #if DEBUG
-			assemblyBuilder.Save(rootNameSpace + ".dll");
+			assemblyBuilder.Save(assemblyName + ".dll");
 #endif
 
 			return contracts;
